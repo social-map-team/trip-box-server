@@ -1,15 +1,22 @@
-package com.socialmap.server.service;
+package com.socialmap.server.service.impl;
 
+import com.socialmap.server.ApplicationProperties;
 import com.socialmap.server.ServerDefaults;
+import com.socialmap.server.dao.TeamDao;
 import com.socialmap.server.dao.UserDao;
 import com.socialmap.server.model.Image;
+import com.socialmap.server.model.Team;
 import com.socialmap.server.model.User;
+import com.socialmap.server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.codec.Hex;
 import org.springframework.stereotype.Service;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +30,12 @@ public class UserServiceImpl implements UserService {
     @Autowired
     UserDao userDao;
 
+    @Autowired
+    TeamDao teamDao;
+
+    @Autowired
+    ApplicationProperties props;
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         return userDao.findUserByUsername(username);
@@ -30,10 +43,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void register(User user) {
+        // encrypt password
+        // digest authentication need clear-text password
+        // but we can store HEX(MD5(username:realm:password)) in password
+        // and DigestAuthenticationFilter#setPasswordAlreadyEncoded(true)
+        String s = String.format("%s:%s:%s", user.getUsername(), props.realm(), user.getPassword());
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("No MD5 algorithm available!");
+        }
+        String hex = new String(Hex.encode(digest.digest(s.getBytes())));
+        user.setPhone(hex);
         userDao.create(user);
     }
 
-    private User currentUser() {
+    public User currentUser() {
         return (User) SecurityContextHolder
                 .getContext()
                 .getAuthentication()
@@ -68,7 +94,11 @@ public class UserServiceImpl implements UserService {
         }
         // avatar
         if (user.getAvatar() != null){
-            pro.put("avatar", user.getAvatar().getId() + "");
+            pro.put("avatar_id", user.getAvatar().getId() + "");
+        }
+        // bgimage
+        if (user.getBgimage() != null){
+            pro.put("bgimage_id", user.getBgimage().getId() + "");
         }
         return pro;
     }
@@ -119,12 +149,10 @@ public class UserServiceImpl implements UserService {
         if (data == null) {
             // use system default avatar
             avatar = ServerDefaults.userAvatar();
-            user.setAvatar(avatar);
         } else {
             avatar = new Image();
             avatar.setName(user.getUsername() + "-avatar");
             avatar.setData(data);
-            user.setAvatar(avatar);
         }
         if (!avatar.equals(user.getAvatar())) {
             user.setAvatar(avatar);
@@ -134,43 +162,89 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void updateBgimage(byte[] data) {
+        Image bgimage;
+        User current = currentUser();
         if (data == null) {
             // use system default bgimage
+            bgimage = ServerDefaults.userBgimage();
         } else {
-
+            bgimage = new Image();
+            bgimage.setName(current.getUsername() + "-bgimage");
+            bgimage.setData(data);
+        }
+        if (!bgimage.equals(current.getBgimage())) {
+            current.setBgimage(bgimage);
+            userDao.update(current);
         }
     }
 
     @Override
-    public List<Long> myFriends(String filter) {
-        // when filter is empty, it will return all friends
-        return null;
+    public List myFriends(String filter) {
+        return userDao.friends(filter);
     }
 
     @Override
     public void addFriend(long id) {
-
+        User current = currentUser();
+        User friend = userDao.findUserById(id);
+        current.getFriends().add(friend);
+        userDao.update(current);
     }
 
     @Override
     public void delFriend(long id) {
+        User current = currentUser();
+        for(User u: current.getFriends()){
+            if(u.getId() == id) {
+                current.getFriends().remove(u);
+                userDao.update(current);
+                break;
+            }
+        }
     }
 
     @Override
-    public List<Long> myTeams(String filter) {
-        return null;
+    public List myTeams(String filter) {
+        return userDao.teams(filter);
     }
 
     @Override
     public void joinTeam(long id) {
+        User current = currentUser();
+        Team team = teamDao.findTeamById(id);
+        current.getTeams().add(team);
+        userDao.update(current);
     }
 
     @Override
     public void quitTeam(long id) {
+        User current = currentUser();
+        for(Team t: current.getTeams()){
+            if(t.getId() == id) {
+                current.getTeams().remove(t);
+                userDao.update(current);
+                break;
+            }
+        }
     }
 
     @Override
-    public List<Long> search(String filter) {
+    public List search(String filter) {
+        return userDao.users(filter);
+    }
+
+    @Override
+    public Map<String, String> friendInfo(long id) {
+        Map<String, String> info = new HashMap<>();
+        User friend = userDao.findUserById(id);
+        if(friend.getUsername()!=null)
+            info.put("username", friend.getUsername());
+        if(friend.getPhone()!=null)
+            info.put("phone", friend.getPhone());
+        if(friend.getEmail()!=null)
+            info.put("email", friend.getEmail());
+        if(friend.getAvatar()!=null)
+            info.put("avatar_id", friend.getAvatar().getId() + "");
         return null;
     }
 }

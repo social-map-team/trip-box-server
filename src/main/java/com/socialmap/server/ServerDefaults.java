@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
  */
 public class ServerDefaults {
     private static Image userAvatar;
+    private static Image userBgimage;
 
     public static void initialize(SessionFactory sessionFactory){
         HibernateTemplate ht = new HibernateTemplate(sessionFactory);
@@ -20,9 +21,19 @@ public class ServerDefaults {
             // cannot find default user avatar
             throw new ServerInitializationException("Cannot find default user avatar image in the database.");
         }
+        try {
+            userBgimage = (Image) ht.find("FROM images WHERE name = ?", "default-user-bgimage").get(0);
+        } catch (IndexOutOfBoundsException e){
+            // cannot find default user background image
+            throw new ServerInitializationException("Cannot find default user background image in the database.");
+        }
     }
 
     public static Image userAvatar() {
         return userAvatar;
+    }
+
+    public static Image userBgimage() {
+        return userBgimage;
     }
 }

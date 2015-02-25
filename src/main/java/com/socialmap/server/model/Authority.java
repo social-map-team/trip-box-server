@@ -28,4 +28,10 @@ public class Authority implements GrantedAuthority {
     public String getAuthority() {
         return name;
     }
+
+    public Authority(){}
+
+    public Authority(String name) {
+        this.name = name;
+    }
 }

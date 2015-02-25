@@ -5,15 +5,13 @@ import com.socialmap.server.model.User;
 import com.socialmap.server.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import static com.socialmap.server.utils.ApiUrls.User.*;
@@ -43,8 +41,6 @@ public class UserController {
     @RequestMapping(value = REGISTER, method = POST)
     @PermitAll
     public void register(@Valid User user) {
-        // TODO Need to encrypt password
-        System.out.println(user.getUsername());
         userService.register(user);
     }
 
@@ -72,4 +68,64 @@ public class UserController {
             userService.updateAvatar(null);
         }
     }
+
+    @RequestMapping(value = UPLOAD_BGIMAGE, method = PUT)
+    public void uploadBgimage(@RequestParam("image") MultipartFile image) {
+        if (!image.isEmpty()) {
+            try {
+                byte[] bytes = image.getBytes();
+                userService.updateBgimage(bytes);
+            } catch (IOException e) {
+                throw new FileUploadException(e);
+            }
+        } else {
+            userService.updateBgimage(null);
+        }
+    }
+
+    @RequestMapping(value = SEARCH, method = GET)
+    public List search(@RequestParam(required = false, defaultValue = "") String filter) {
+        return userService.search(filter);
+    }
+
+    @RequestMapping(value = UPDATE_PROFILE, method = PUT)
+    public void updateProfile(Map<String, String> changes) {
+        userService.update(changes);
+    }
+
+    @RequestMapping(value = MY_FRIENDS, method = GET)
+    public List myFriends(@RequestParam(required = false, defaultValue = "") String filter) {
+        return userService.myFriends(filter);
+    }
+
+    @RequestMapping(value = ADD_FRIEND, method = POST)
+    public void addFriend(@PathVariable long id) {
+        userService.addFriend(id);
+    }
+
+    @RequestMapping(value = DEL_FRIEND, method = DELETE)
+    public void deleteFriend(@PathVariable long id) {
+        userService.delFriend(id);
+    }
+
+    @RequestMapping(value = FRIEND_INFO, method = GET)
+    public Map<String, String> friendInfo(@PathVariable long id) {
+        return userService.friendInfo(id);
+    }
+
+    @RequestMapping(value = MY_TEAMS, method = GET)
+    public List myTeams(@RequestParam(required = false, defaultValue = "") String filter) {
+        return userService.myTeams(filter);
+    }
+
+    @RequestMapping(value = JOIN_TEAM, method = POST)
+    public void joinTeam(@PathVariable long id) {
+        userService.joinTeam(id);
+    }
+
+    @RequestMapping(value = QUIT_TEAM, method = DELETE)
+    public void quitTeam(@PathVariable long id) {
+        userService.quitTeam(id);
+    }
+
 }

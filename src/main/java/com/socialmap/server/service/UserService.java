@@ -32,6 +32,8 @@ public interface UserService extends UserDetailsService {
 
     public void delFriend(long id);
 
+    public Map<String, String> friendInfo(long id);
+
     public List myTeams(String filter);
 
     public void joinTeam(long id);

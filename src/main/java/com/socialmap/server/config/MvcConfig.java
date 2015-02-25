@@ -16,9 +16,7 @@ import java.util.List;
  */
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = {
-        "com.socialmap.server.controller"
-})
+@ComponentScan("com.socialmap.server.controller")
 public class MvcConfig extends WebMvcConfigurerAdapter{
     // Configure the HttpMessageConverters to use for reading or writing to the body
     // of the request or response.

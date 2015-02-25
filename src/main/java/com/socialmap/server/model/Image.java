@@ -32,6 +32,7 @@ public class Image implements Serializable{
     }
 
     @Lob
+    @Column(length = 1024*1024*5)
     public byte[] getData() {
         return data;
     }
@@ -49,5 +50,14 @@ public class Image implements Serializable{
             }
         }
         return false;
+    }
+
+    public Image() {
+
+    }
+
+    public Image(String name, byte[] data){
+        this.name = name;
+        this.data = data;
     }
 }

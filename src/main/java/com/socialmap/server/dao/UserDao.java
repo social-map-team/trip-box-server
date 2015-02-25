@@ -11,8 +11,6 @@ import java.util.List;
 public interface UserDao {
     public User findUserByUsername(String username);
 
-    public Long findIdByUsername(String username);
-
     public User findUserById(Long id);
 
     public void create(User user);
@@ -21,7 +19,9 @@ public interface UserDao {
 
     public void delete(User user);
 
-    public void deleteById(Long id);
+    public List friends(String filter);
 
-    public List findUsers(String filter);
+    public List teams(String filter);
+
+    public List users(String filter);
 }

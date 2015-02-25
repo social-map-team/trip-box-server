@@ -1,5 +1,6 @@
-package com.socialmap.server.dao;
+package com.socialmap.server.dao.impl;
 
+import com.socialmap.server.dao.ImageDao;
 import com.socialmap.server.model.Image;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;

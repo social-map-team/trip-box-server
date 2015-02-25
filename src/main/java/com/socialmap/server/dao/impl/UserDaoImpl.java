@@ -1,5 +1,6 @@
-package com.socialmap.server.dao;
+package com.socialmap.server.dao.impl;
 
+import com.socialmap.server.dao.UserDao;
 import com.socialmap.server.exception.UserNotFoundException;
 import com.socialmap.server.model.User;
 import org.hibernate.SessionFactory;
@@ -37,15 +38,6 @@ public class UserDaoImpl extends HibernateDaoSupport implements UserDao {
     }
 
     @Override
-    public Long findIdByUsername(String username) {
-        List result = getHibernateTemplate().find("SELECT id FROM users WHERE username=?", username);
-        if (result.size() <= 0) {
-            throw new UserNotFoundException(String.format("User(name = %s) dose not exist", username));
-        }
-        return (Long) result.get(0);
-    }
-
-    @Override
     public User findUserById(Long id) throws UserNotFoundException {
         User user = getHibernateTemplate().get(User.class, id);
         return user;
@@ -62,13 +54,29 @@ public class UserDaoImpl extends HibernateDaoSupport implements UserDao {
     }
 
     @Override
-    public void deleteById(Long id) {
-        getHibernateTemplate().delete(findUserById(id));
+    public List friends(String filter) {
+        if (filter.isEmpty()) {
+            return getHibernateTemplate().find("SELECT id FROM users.friends");
+        }
+        // TODO SQL Injection Problem
+        return getHibernateTemplate().find("SELECT id FROM users.friends WHERE " + filter);
     }
 
     @Override
-    public List findUsers(String filter) {
-        // Given the filter has been checked and is secure
-        return getHibernateTemplate().find("SELECT id FROM users WHERE ?", filter);
+    public List teams(String filter) {
+        if (filter.isEmpty()) {
+            return getHibernateTemplate().find("SELECT id FROM users.teams");
+        }
+        // TODO SQL Injection Problem
+        return getHibernateTemplate().find("SELECT id FROM users.teams WHERE " + filter);
+    }
+
+    @Override
+    public List users(String filter) {
+        if (filter.isEmpty()) {
+            return getHibernateTemplate().find("SELECT id FROM users");
+        }
+        // TODO SQL Injection Problem
+        return getHibernateTemplate().find("SELECT id FROM users.friends WHERE " + filter);
     }
 }

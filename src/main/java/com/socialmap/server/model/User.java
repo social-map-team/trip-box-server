@@ -17,6 +17,7 @@ import java.util.Set;
  * Created by yy on 2/22/15.
  */
 @Entity(name = "users")
+//@Table(name = "TBS_USERS")
 public class User implements UserDetails, Serializable {
 
     private long id;
@@ -38,6 +39,8 @@ public class User implements UserDetails, Serializable {
     private Image avatar;
     private Image bgimage;
     private Gender gender;
+    private Set<User> friends;
+    private Set<Team> teams;
 
     public User() {
         enabled = true;
@@ -49,6 +52,7 @@ public class User implements UserDetails, Serializable {
 
     @Id
     @GeneratedValue
+    //@Column(name = "ID")
     public long getId() {
         return id;
     }
@@ -169,6 +173,24 @@ public class User implements UserDetails, Serializable {
 
     public void setGender(Gender gender) {
         this.gender = gender;
+    }
+
+    @OneToMany
+    public Set<User> getFriends() {
+        return friends;
+    }
+
+    public void setFriends(Set<User> friends) {
+        this.friends = friends;
+    }
+
+    @OneToMany
+    public Set<Team> getTeams() {
+        return teams;
+    }
+
+    public void setTeams(Set<Team> teams) {
+        this.teams = teams;
     }
 
     @Transient
